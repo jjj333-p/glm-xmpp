@@ -187,6 +187,29 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 	return nil
 }
 
+func (self *XmppClient) CreateListener(
+	stanzaType string,
+	messageType stanza.MessageType,
+	bareJID string,
+	resourcepart string,
+	limit int,
+	swallowEvent bool,
+) chan XmppAbstractMessage {
+	ch := make(chan XmppAbstractMessage)
+	self.listeners.Lock.Lock()
+	defer self.listeners.Lock.Unlock()
+	self.listeners.Array = append(self.listeners.Array, &xmppMessageListener{
+		StanzaType:    stanzaType,
+		MessageType:   messageType,
+		BareJID:       bareJID,
+		Resourcepart:  resourcepart,
+		LeftToRecieve: limit,
+		SwallowEvent:  swallowEvent,
+		EventChan:     ch,
+	})
+	return ch
+}
+
 func CreateClient(login LoginInfo) (XmppClient, error) {
 	client := &XmppClient{}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
