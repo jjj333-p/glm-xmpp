@@ -16,6 +16,7 @@ import (
 	"sync"
 )
 
+// LoginInfo is a struct of the information required to log into the xmpp  client
 type LoginInfo struct {
 	Host        string   `json:"Host"`
 	User        string   `json:"User"`
@@ -26,13 +27,16 @@ type LoginInfo struct {
 	MucsToJoin  []string `json:"Mucs"`
 }
 
+// XmppMessageBody is a struct representing a raw event stanza
 type XmppMessageBody struct {
 	stanza.Message
 	Body string `xml:"body"`
 }
 
-// XmppAbstractMessage struct is a representation of the stanza such that it's contextual items
-// such as room, as well as abstract methods such as .reply()
+/*
+XmppAbstractMessage struct is a representation of the stanza such that it's contextual items
+such as room, as well as abstract methods such as .reply()
+*/
 type XmppAbstractMessage struct {
 	Stanza struct {
 		stanza.Message
@@ -40,6 +44,7 @@ type XmppAbstractMessage struct {
 	}
 }
 
+// xmppMessageListener contains internal metadata for event listener channels
 type xmppMessageListener struct {
 	StanzaType    string
 	MessageType   stanza.MessageType
@@ -50,11 +55,13 @@ type xmppMessageListener struct {
 	EventChan     chan XmppAbstractMessage
 }
 
+// xmppMessageListeners allows for thread safe accessing of listeners
 type xmppMessageListeners struct {
 	Array []*xmppMessageListener
 	Lock  sync.Mutex
 }
 
+// XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {
 	Ctx       context.Context
 	CtxCancel context.CancelFunc
@@ -130,8 +137,12 @@ func (self *XmppClient) startServing() error {
 
 type connectionErrHandler func(err error)
 
-// Connect dials the server and starts recieving the events.
-// `blocking`
+/*
+Connect dials the server and starts recieving the events.
+if blocking is true, this method will not exit until the xmpp connection is no longer being maintained
+if blocking is false, this method will exit as soon as a connection is created, and errors will be emitted
+through the callback onErr
+*/
 func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error {
 	d := dial.Dialer{}
 
@@ -210,10 +221,13 @@ func (self *XmppClient) CreateListener(
 	return ch
 }
 
+// CreateClient creates the client object using the login info object, and returns it
 func CreateClient(login LoginInfo) (XmppClient, error) {
+	// create client object
 	client := &XmppClient{}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
 
+	//string to jid object
 	j, err := jid.Parse(login.User)
 	if err != nil {
 		return *client,
