@@ -10,6 +10,7 @@ import (
 	"mellium.im/xmpp"
 	"mellium.im/xmpp/dial"
 	"mellium.im/xmpp/jid"
+	"mellium.im/xmpp/stanza"
 )
 
 type LoginInfo struct {
@@ -20,6 +21,25 @@ type LoginInfo struct {
 	TLSoff      bool     `json:"NoTLS"`
 	StartTLS    bool     `json:"StartTLS"`
 	MucsToJoin  []string `json:"Mucs"`
+}
+
+//XmppAbstractMessage struct is a representation of the stanza such that it's contextual items
+//such as room, as well as abstract methods such as .reply()
+type XmppAbstractMessage struct {
+	Stanza struct {
+		stanza.Message
+		Body string `xml:"body"`
+	}
+}
+
+type XmppMessageListener struct {
+	StanzaType string
+	MessageType stanza.MessageType
+	BareJID jid.JID
+	Resourcepart string
+	EventChan chan
+}
+
 }
 
 type XmppClient struct {
