@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"mellium.im/sasl"
 	"mellium.im/xmlstream"
 	"mellium.im/xmpp"
@@ -67,7 +68,7 @@ type XmppClient struct {
 	CtxCancel   context.CancelFunc
 	Login       *LoginInfo
 	JID         *jid.JID
-	Server      string
+	Server      *string
 	Session     *xmpp.Session
 	listeners   *xmppMessageListeners
 	Multiplexer *mux.ServeMux
@@ -83,7 +84,7 @@ func (self *XmppClient) startServing() error {
 }
 
 func (self *XmppClient) HandleDM(msg stanza.Message, t xmlstream.TokenReadEncoder) error {
-
+	fmt.Println("bing bong")
 	return nil
 }
 
@@ -98,7 +99,7 @@ through the callback onErr
 func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error {
 	d := dial.Dialer{}
 
-	conn, err := d.DialServer(self.Ctx, "tcp", *self.JID, self.Server)
+	conn, err := d.DialServer(self.Ctx, "tcp", *self.JID, *self.Server)
 	if err != nil {
 		return errors.New("Could not connect stage 1 - " + err.Error())
 	}
@@ -115,7 +116,7 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 				Features: []xmpp.StreamFeature{
 					xmpp.BindResource(),
 					xmpp.StartTLS(&tls.Config{
-						ServerName: self.Server,
+						ServerName: *self.Server,
 						MinVersion: tls.VersionTLS12,
 					}),
 					xmpp.SASL("", self.Login.Password, sasl.ScramSha1Plus, sasl.ScramSha1, sasl.Plain),
@@ -178,10 +179,11 @@ func (self *XmppClient) CreateListener(
 //}
 
 // CreateClient creates the client object using the login info object, and returns it
-func CreateClient(login LoginInfo) (XmppClient, error) {
+func CreateClient(login *LoginInfo) (XmppClient, error) {
 	// create client object
 	client := &XmppClient{}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
+	client.Login = login
 
 	//client.MucClient
 	messageNS := xml.Name{
@@ -191,8 +193,8 @@ func CreateClient(login LoginInfo) (XmppClient, error) {
 
 	client.Multiplexer = mux.New(
 		"jabber:client",
-		muc.HandleClient(client.MucClient),
-		mux.MessageFunc(stanza.NormalMessage, messageNS, mux.MessageHandlerFunc(client.HandleDM)),
+		//muc.HandleClient(client.MucClient),
+		mux.MessageFunc(stanza.ChatMessage, messageNS, client.HandleDM),
 	)
 
 	//string to jid object
@@ -201,8 +203,9 @@ func CreateClient(login LoginInfo) (XmppClient, error) {
 		return *client,
 			errors.New("Could not parse user JID from `" + login.User + " - " + err.Error())
 	}
-
-	client.Server = j.Domainpart()
+	server := j.Domainpart()
+	client.JID = &j
+	client.Server = &server
 
 	return *client, nil
 }
