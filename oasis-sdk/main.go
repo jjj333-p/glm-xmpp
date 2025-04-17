@@ -5,13 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/xml"
 	"errors"
-	"fmt"
-	"io"
 	"mellium.im/sasl"
 	"mellium.im/xmlstream"
 	"mellium.im/xmpp"
 	"mellium.im/xmpp/dial"
 	"mellium.im/xmpp/jid"
+	"mellium.im/xmpp/muc"
+	"mellium.im/xmpp/mux"
 	"mellium.im/xmpp/stanza"
 	"sync"
 )
@@ -63,76 +63,28 @@ type xmppMessageListeners struct {
 
 // XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {
-	Ctx       context.Context
-	CtxCancel context.CancelFunc
-	Login     *LoginInfo
-	JID       *jid.JID
-	Server    string
-	Session   *xmpp.Session
-	listeners *xmppMessageListeners
+	Ctx         context.Context
+	CtxCancel   context.CancelFunc
+	Login       *LoginInfo
+	JID         *jid.JID
+	Server      string
+	Session     *xmpp.Session
+	listeners   *xmppMessageListeners
+	Multiplexer *mux.ServeMux
+	MucClient   *muc.Client
 }
 
 // startServing is an internal function to add an internal handler to the session.
 // Most of this is just obtuse things inherited from mellium
 func (self *XmppClient) startServing() error {
 	return self.Session.Serve(
-		xmpp.HandlerFunc(
-			func(tokenReadEncoder xmlstream.TokenReadEncoder, start *xml.StartElement) error {
-				decoder := xml.NewTokenDecoder(xmlstream.MultiReader(xmlstream.Token(*start), tokenReadEncoder))
-				if _, err := decoder.Token(); err != nil {
-					return err
-				}
-
-				body := XmppMessageBody{}
-				err := decoder.DecodeElement(&body, start)
-				if err != nil && err != io.EOF {
-					fmt.Println("Error decoding element - " + err.Error())
-					return nil
-				}
-
-				self.listeners.Lock.Lock()
-
-				indexesToRemove := make([]int, 0)
-				//emit to every listener
-				for i := len(self.listeners.Array) - 1; i >= 0; i-- {
-					listener := self.listeners.Array[i]
-
-					//check the conditionals
-					if listener.StanzaType != "" && listener.StanzaType != start.Name.Local {
-						continue
-					}
-					if listener.MessageType != "" && listener.MessageType != body.Type {
-						continue
-					}
-					if listener.BareJID != "" && listener.BareJID != body.From.Bare().String() {
-						continue
-					}
-					if listener.Resourcepart != "" && listener.Resourcepart != body.From.Resourcepart() {
-						continue
-					}
-					if listener.LeftToRecieve == 0 {
-						indexesToRemove = append(indexesToRemove, i)
-						close(listener.EventChan)
-					} else if listener.LeftToRecieve > 0 {
-						listener.LeftToRecieve--
-					}
-
-					//emit event
-					listener.EventChan <- XmppAbstractMessage{
-						Stanza: body,
-					}
-
-					//latest consumers first, can swallow
-					if listener.SwallowEvent {
-						break
-					}
-
-				}
-				self.listeners.Lock.Unlock()
-				return nil
-			},
-		),
+		self.Multiplexer,
 	)
+}
+
+func (self *XmppClient) HandleDM(msg stanza.Message, t xmlstream.TokenReadEncoder) error {
+
+	return nil
 }
 
 type connectionErrHandler func(err error)
@@ -221,11 +173,27 @@ func (self *XmppClient) CreateListener(
 	return ch
 }
 
+//func (self *XmppClient) sendMessageToJID() {
+//
+//}
+
 // CreateClient creates the client object using the login info object, and returns it
 func CreateClient(login LoginInfo) (XmppClient, error) {
 	// create client object
 	client := &XmppClient{}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
+
+	//client.MucClient
+	messageNS := xml.Name{
+		Space: "jabber:client",
+		Local: "message",
+	}
+
+	client.Multiplexer = mux.New(
+		"jabber:client",
+		muc.HandleClient(client.MucClient),
+		mux.MessageFunc(stanza.NormalMessage, messageNS, mux.MessageHandlerFunc(client.HandleDM)),
+	)
 
 	//string to jid object
 	j, err := jid.Parse(login.User)

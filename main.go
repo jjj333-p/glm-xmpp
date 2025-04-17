@@ -161,7 +161,6 @@ func main() {
 						fmt.Printf("stanza fart %s %s: %s\n", body.Type, body.From.Bare().String(), body.Body)
 
 						//testMucJid, _ := jid.Parse("testing@group.pain.agency")
-
 						resourcepart := body.From.Resourcepart()
 						var role string
 						if resourcepart == xmppConfig.DisplayName {
