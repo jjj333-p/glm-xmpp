@@ -185,16 +185,16 @@ func CreateClient(login *LoginInfo) (XmppClient, error) {
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
 	client.Login = login
 
-	//client.MucClient
-	messageNS := xml.Name{
-		Space: "jabber:client",
-		Local: "message",
-	}
+	////client.MucClient
+	//messageNS := xml.Name{
+	//	Space: "jabber:client",
+	//	Local: "message",
+	//}
 
 	client.Multiplexer = mux.New(
 		"jabber:client",
-		//muc.HandleClient(client.MucClient),
-		mux.MessageFunc(stanza.ChatMessage, messageNS, client.HandleDM),
+		muc.HandleClient(client.MucClient),
+		mux.MessageFunc(stanza.ChatMessage, xml.Name{}, client.HandleDM),
 	)
 
 	//string to jid object

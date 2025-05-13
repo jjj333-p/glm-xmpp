@@ -2,7 +2,11 @@ module pain.agency/oasis-sdk
 
 go 1.23.7
 
-require mellium.im/xmpp v0.22.0
+require (
+	mellium.im/sasl v0.3.2
+	mellium.im/xmlstream v0.15.4
+	mellium.im/xmpp v0.22.0
+)
 
 require (
 	golang.org/x/crypto v0.27.0 // indirect
@@ -12,6 +16,4 @@ require (
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/tools v0.25.0 // indirect
 	mellium.im/reader v0.1.0 // indirect
-	mellium.im/sasl v0.3.2 // indirect
-	mellium.im/xmlstream v0.15.4 // indirect
 )

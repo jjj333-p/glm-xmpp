@@ -64,6 +64,12 @@ func main() {
 		panic("Could not create client - " + err.Error())
 	}
 
+	//go func(msgChan chan oasisSdk.XmppAbstractMessage) {
+	//	for msg := range msgChan {
+	//		fmt.Println(msg.Stanza.Body)
+	//	}
+	//}(client.CreateListener("", "", "", "", -1, false))
+
 	if client.Connect(true, nil) != nil {
 		panic("Could not connect - " + err.Error())
 	}
