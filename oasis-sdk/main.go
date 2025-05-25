@@ -78,6 +78,10 @@ type XmppClient struct {
 // startServing is an internal function to add an internal handler to the session.
 // Most of this is just obtuse things inherited from mellium
 func (self *XmppClient) startServing() error {
+	err := self.Session.Send(self.Ctx, stanza.Presence{Type: stanza.AvailablePresence}.Wrap(nil))
+	if err != nil {
+		return err
+	}
 	return self.Session.Serve(
 		self.Multiplexer,
 	)
@@ -185,16 +189,16 @@ func CreateClient(login *LoginInfo) (XmppClient, error) {
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
 	client.Login = login
 
-	////client.MucClient
-	//messageNS := xml.Name{
-	//	Space: "jabber:client",
-	//	Local: "message",
-	//}
+	//client.MucClient
+	messageNS := xml.Name{
+		//Space: "jabber:client",
+		Local: "body",
+	}
 
 	client.Multiplexer = mux.New(
 		"jabber:client",
 		muc.HandleClient(client.MucClient),
-		mux.MessageFunc(stanza.ChatMessage, xml.Name{}, client.HandleDM),
+		mux.MessageFunc(stanza.ChatMessage, messageNS, client.HandleDM),
 	)
 
 	//string to jid object

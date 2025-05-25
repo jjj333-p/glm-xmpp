@@ -1,3 +1,5 @@
 db
 inspirobot-disruptor-xmpp
 .idea
+/go.work
+/go.work.sum
