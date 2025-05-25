@@ -96,8 +96,8 @@ type connectionErrHandler func(err error)
 
 /*
 Connect dials the server and starts recieving the events.
-if blocking is true, this method will not exit until the xmpp connection is no longer being maintained
-if blocking is false, this method will exit as soon as a connection is created, and errors will be emitted
+If blocking is true, this method will not exit until the xmpp connection is no longer being maintained.
+If blocking is false, this method will exit as soon as a connection is created, and errors will be emitted
 through the callback onErr
 */
 func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error {
