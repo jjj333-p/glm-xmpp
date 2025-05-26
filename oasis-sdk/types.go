@@ -43,12 +43,15 @@ type OriginID struct {
 }
 
 type ChatMessageBody struct {
-	Body     string    `xml:"body"`
-	OriginID OriginID  `xml:"origin-id"`
-	Reply    Reply     `xml:"reply"`
-	Fallback Fallback  `xml:"fallback"`
-	Request  *struct{} `xml:"request"`
-	Markable *struct{} `xml:"markable"`
+	Body              string     `xml:"body"`
+	OriginID          OriginID   `xml:"origin-id"`
+	Reply             Reply      `xml:"reply"`
+	Fallback          []Fallback `xml:"fallback"`
+	Request           *struct{}  `xml:"request"`
+	Markable          *struct{}  `xml:"markable"`
+	FallbacksParsed   bool
+	CleanedBody       string
+	ReplyFallbackText string
 }
 
 /*
