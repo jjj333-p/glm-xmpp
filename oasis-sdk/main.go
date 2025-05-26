@@ -5,92 +5,14 @@ import (
 	"crypto/tls"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"mellium.im/sasl"
-	"mellium.im/xmlstream"
 	"mellium.im/xmpp"
 	"mellium.im/xmpp/dial"
 	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/muc"
 	"mellium.im/xmpp/mux"
 	"mellium.im/xmpp/stanza"
-	"sync"
 )
-
-// LoginInfo is a struct of the information required to log into the xmpp  client
-type LoginInfo struct {
-	Host        string   `json:"Host"`
-	User        string   `json:"User"`
-	Password    string   `json:"Password"`
-	DisplayName string   `json:"DisplayName"`
-	TLSoff      bool     `json:"NoTLS"`
-	StartTLS    bool     `json:"StartTLS"`
-	MucsToJoin  []string `json:"Mucs"`
-}
-
-// XmppMessageBody is a struct representing a raw event stanza
-type XmppMessageBody struct {
-	stanza.Message
-	Body string `xml:"body"`
-}
-
-/*
-XmppAbstractMessage struct is a representation of the stanza such that it's contextual items
-such as room, as well as abstract methods such as .reply()
-*/
-type XmppAbstractMessage struct {
-	Stanza struct {
-		stanza.Message
-		Body string `xml:"body"`
-	}
-}
-
-// xmppMessageListener contains internal metadata for event listener channels
-type xmppMessageListener struct {
-	StanzaType    string
-	MessageType   stanza.MessageType
-	BareJID       string
-	Resourcepart  string
-	LeftToRecieve int
-	SwallowEvent  bool
-	EventChan     chan XmppAbstractMessage
-}
-
-// xmppMessageListeners allows for thread safe accessing of listeners
-type xmppMessageListeners struct {
-	Array []*xmppMessageListener
-	Lock  sync.Mutex
-}
-
-// XmppClient is the end xmpp client object from which everything else works around
-type XmppClient struct {
-	Ctx         context.Context
-	CtxCancel   context.CancelFunc
-	Login       *LoginInfo
-	JID         *jid.JID
-	Server      *string
-	Session     *xmpp.Session
-	listeners   *xmppMessageListeners
-	Multiplexer *mux.ServeMux
-	MucClient   *muc.Client
-}
-
-// startServing is an internal function to add an internal handler to the session.
-// Most of this is just obtuse things inherited from mellium
-func (self *XmppClient) startServing() error {
-	err := self.Session.Send(self.Ctx, stanza.Presence{Type: stanza.AvailablePresence}.Wrap(nil))
-	if err != nil {
-		return err
-	}
-	return self.Session.Serve(
-		self.Multiplexer,
-	)
-}
-
-func (self *XmppClient) HandleDM(msg stanza.Message, t xmlstream.TokenReadEncoder) error {
-	fmt.Println("bing bong")
-	return nil
-}
 
 type connectionErrHandler func(err error)
 
@@ -155,39 +77,14 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 	return nil
 }
 
-func (self *XmppClient) CreateListener(
-	stanzaType string,
-	messageType stanza.MessageType,
-	bareJID string,
-	resourcepart string,
-	limit int,
-	swallowEvent bool,
-) chan XmppAbstractMessage {
-	ch := make(chan XmppAbstractMessage)
-	self.listeners.Lock.Lock()
-	defer self.listeners.Lock.Unlock()
-	self.listeners.Array = append(self.listeners.Array, &xmppMessageListener{
-		StanzaType:    stanzaType,
-		MessageType:   messageType,
-		BareJID:       bareJID,
-		Resourcepart:  resourcepart,
-		LeftToRecieve: limit,
-		SwallowEvent:  swallowEvent,
-		EventChan:     ch,
-	})
-	return ch
-}
-
-//func (self *XmppClient) sendMessageToJID() {
-//
-//}
-
 // CreateClient creates the client object using the login info object, and returns it
-func CreateClient(login *LoginInfo) (XmppClient, error) {
+func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler) (XmppClient, error) {
 	// create client object
-	client := &XmppClient{}
+	client := &XmppClient{
+		Login:     login,
+		dmHandler: dmHandler,
+	}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
-	client.Login = login
 
 	//client.MucClient
 	messageNS := xml.Name{
@@ -198,7 +95,7 @@ func CreateClient(login *LoginInfo) (XmppClient, error) {
 	client.Multiplexer = mux.New(
 		"jabber:client",
 		muc.HandleClient(client.MucClient),
-		mux.MessageFunc(stanza.ChatMessage, messageNS, client.HandleDM),
+		mux.MessageFunc(stanza.ChatMessage, messageNS, client.internalHandleDM),
 	)
 
 	//string to jid object

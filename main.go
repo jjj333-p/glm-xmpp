@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"mellium.im/xmpp/stanza"
 	"os"
 	oasisSdk "pain.agency/oasis-sdk"
@@ -39,6 +40,10 @@ type llmResponse struct {
 //existed when i had the xml decoding in a goroutine, didnt work because pointer deref
 //type msgListener func(tokenReadEncoder xmlstream.TokenReadEncoder, start *xml.StartElement) error
 
+func handleDM(msg oasisSdk.XMPPChatMessage) {
+	fmt.Println(msg)
+}
+
 func main() {
 
 	//oasis_sdk.CreateClient()
@@ -59,12 +64,12 @@ func main() {
 	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
 	//systemPrompt := []llmMessage{sp}
 	//
-	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo)
+	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM)
 	if err != nil {
 		panic("Could not create client - " + err.Error())
 	}
 
-	//go func(msgChan chan oasisSdk.XmppAbstractMessage) {
+	//go func(msgChan chan oasisSdk.XMPPAbstractChatMessage) {
 	//	for msg := range msgChan {
 	//		fmt.Println(msg.Stanza.Body)
 	//	}
