@@ -39,6 +39,6 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 	msg.ChatBody.ParseReply()
 
 	//call handler and return to connection
-	go self.dmHandler(msg)
+	self.dmHandler(self, msg)
 	return nil
 }
