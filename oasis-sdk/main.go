@@ -77,6 +77,22 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 	return nil
 }
 
+func (self *XmppClient) SendText(to jid.JID, body string) error {
+	msg := struct {
+		header stanza.Message
+		Body   string `xml:"body"`
+	}{
+		header: stanza.Message{
+			To:   to,
+			From: *self.JID,
+			Type: stanza.ChatMessage,
+		},
+		Body: body,
+	}
+	err := self.Session.Encode(self.Ctx, msg)
+	return err
+}
+
 // CreateClient creates the client object using the login info object, and returns it
 func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler) (XmppClient, error) {
 	// create client object

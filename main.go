@@ -40,8 +40,15 @@ type llmResponse struct {
 //existed when i had the xml decoding in a goroutine, didnt work because pointer deref
 //type msgListener func(tokenReadEncoder xmlstream.TokenReadEncoder, start *xml.StartElement) error
 
-func handleDM(msg oasisSdk.XMPPChatMessage) {
-	fmt.Printf("message \"%s\" replying to \"%s\"\n", msg.ChatBody.CleanedBody, msg.ChatBody.ReplyFallbackText)
+func handleDM(client *oasisSdk.XmppClient, msg oasisSdk.XMPPChatMessage) {
+	client.SendText(
+		msg.Header.From,
+		fmt.Sprintf(
+			"message \"%s\" replying to \"%s\"\n",
+			msg.ChatBody.CleanedBody,
+			msg.ChatBody.ReplyFallbackText,
+		),
+	)
 }
 
 func main() {
