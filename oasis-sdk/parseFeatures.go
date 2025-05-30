@@ -2,7 +2,8 @@ package oasis_sdk
 
 func (self *ChatMessageBody) ParseReply() {
 	//if this isnt a reply we dont need to parse the reply out
-	if self.Reply.ID == "" ||
+	if self.Reply == nil ||
+		self.Reply.ID == "" ||
 		self.Reply.To == "" {
 		self.CleanedBody = *self.Body
 		self.FallbacksParsed = true
