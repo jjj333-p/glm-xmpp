@@ -49,6 +49,16 @@ type DeliveryReceiptRequest struct {
 	XMLName xml.Name `xml:"urn:xmpp:receipts request"`
 }
 
+type DeliveryReceipt struct {
+	XMLName xml.Name `xml:"urn:xmpp:receipts received"`
+	ID      string   `xml:"id,attr"`
+}
+
+type DeliveryReceiptResponse struct {
+	stanza.Message
+	Received DeliveryReceipt `xml:"received"`
+}
+
 // ReadReceiptRequest provided by XEP-0184: Message Delivery Receipts
 type ReadReceiptRequest struct {
 	XMLName xml.Name `xml:"urn:xmpp:chat-markers:0 markable"`
@@ -145,7 +155,7 @@ type XMPPChatMessage struct {
 	ChatMessageBody
 }
 
-type ChatMessageHandler func(client *XmppClient, message XMPPChatMessage)
+type ChatMessageHandler func(client *XmppClient, message *XMPPChatMessage)
 
 // XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {

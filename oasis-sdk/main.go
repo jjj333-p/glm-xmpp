@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"mellium.im/sasl"
 	"mellium.im/xmpp"
 	"mellium.im/xmpp/dial"
@@ -82,6 +83,24 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 	return nil
 }
 
+// MarkAsDelivered sends delivery receipt as per https://xmpp.org/extensions/xep-0184.html
+func (self *XmppClient) MarkAsDelivered(orignalMSG *XMPPChatMessage) {
+	msg := DeliveryReceiptResponse{
+		Message: stanza.Message{
+			To:   orignalMSG.From.Bare(),
+			Type: orignalMSG.Type,
+		},
+		Received: DeliveryReceipt{
+			ID: orignalMSG.ID,
+		},
+	}
+	err := self.Session.Encode(self.Ctx, msg)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+// SendText sends a plain message with `body` (type string) to `to` JID
 func (self *XmppClient) SendText(to jid.JID, body string) error {
 	msg := XMPPChatMessage{
 		Message: stanza.Message{
@@ -96,7 +115,8 @@ func (self *XmppClient) SendText(to jid.JID, body string) error {
 	return err
 }
 
-func (self *XmppClient) ReplyToEvent(originalMsg XMPPChatMessage, body string) error {
+// ReplyToEvent replies to a message event with body as per https://xmpp.org/extensions/xep-0461.html
+func (self *XmppClient) ReplyToEvent(originalMsg *XMPPChatMessage, body string) error {
 	//pull out JIDs as per https://xmpp.org/extensions/xep-0461.html#usecases
 	replyTo := originalMsg.From
 	to := replyTo.Bare()

@@ -31,9 +31,14 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 	if err != nil {
 		return err
 	}
-	msg := XMPPChatMessage{
+	msg := &XMPPChatMessage{
 		Message:         header,
 		ChatMessageBody: *body,
+	}
+
+	//mark as received if requested, and not group chat as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
+	if msg.RequestingDeliveryReceipt() && msg.Type != stanza.GroupChatMessage {
+		go self.MarkAsDelivered(msg)
 	}
 
 	msg.ParseReply()
