@@ -141,8 +141,8 @@ XMPPChatMessage struct is a representation of the stanza such that it's contextu
 such as room, as well as abstract methods such as .reply()
 */
 type XMPPChatMessage struct {
-	Header   stanza.Message
-	ChatBody ChatMessageBody
+	stanza.Message
+	ChatMessageBody
 }
 
 type ChatMessageHandler func(client *XmppClient, message XMPPChatMessage)

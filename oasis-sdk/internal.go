@@ -32,11 +32,11 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 		return err
 	}
 	msg := XMPPChatMessage{
-		Header:   header,
-		ChatBody: *body,
+		Message:         header,
+		ChatMessageBody: *body,
 	}
 
-	msg.ChatBody.ParseReply()
+	msg.ParseReply()
 
 	//call handler and return to connection
 	self.dmHandler(self, msg)

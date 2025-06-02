@@ -41,14 +41,17 @@ type llmResponse struct {
 //type msgListener func(tokenReadEncoder xmlstream.TokenReadEncoder, start *xml.StartElement) error
 
 func handleDM(client *oasisSdk.XmppClient, msg oasisSdk.XMPPChatMessage) {
-	client.SendText(
-		msg.Header.From,
+	err := client.SendText(
+		msg.From.Bare(),
 		fmt.Sprintf(
 			"message \"%s\" replying to \"%s\"\n",
-			msg.ChatBody.CleanedBody,
-			msg.ChatBody.ReplyFallbackText,
+			msg.CleanedBody,
+			msg.ReplyFallbackText,
 		),
 	)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func main() {
