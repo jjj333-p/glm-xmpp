@@ -93,9 +93,9 @@ type ChatMessageBody struct {
 	InactiveChatState  *InactiveChatstate      `xml:"inactive"`
 	ComposingChatState *ComposingChatstate     `xml:"composing"`
 	PausedChatState    *PausedChatstate        `xml:"paused"`
-	FallbacksParsed    bool
-	CleanedBody        string
-	ReplyFallbackText  string
+	FallbacksParsed    bool                    `xml:"-"`
+	CleanedBody        *string                 `xml:"-"`
+	ReplyFallbackText  *string                 `xml:"-"`
 }
 
 func (self *ChatMessageBody) RequestingDeliveryReceipt() bool {

@@ -5,7 +5,7 @@ func (self *ChatMessageBody) ParseReply() {
 	if self.Reply == nil ||
 		self.Reply.ID == "" ||
 		self.Reply.To == "" {
-		self.CleanedBody = *self.Body
+		self.CleanedBody = self.Body
 		self.FallbacksParsed = true
 		return
 	}
@@ -18,7 +18,7 @@ func (self *ChatMessageBody) ParseReply() {
 		}
 	}
 	if replyFallback == nil {
-		self.CleanedBody = *self.Body
+		self.CleanedBody = self.Body
 		self.FallbacksParsed = true
 		return
 	}
@@ -30,6 +30,6 @@ func (self *ChatMessageBody) ParseReply() {
 	}
 	replyPart := (*self.Body)[replyFallback.Body.Start:replyFallback.Body.End]
 	bodyPart += (*self.Body)[replyFallback.Body.End:]
-	self.CleanedBody = bodyPart
-	self.ReplyFallbackText = replyPart
+	self.CleanedBody = &bodyPart
+	self.ReplyFallbackText = &replyPart
 }
