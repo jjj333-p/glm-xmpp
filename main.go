@@ -73,11 +73,6 @@ func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasis
 	}
 }
 
-func handleGroupChat(client *oasisSdk.XmppClient, channel *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
-	fmt.Printf("groupchat %s: %s\n", msg.From.String(), *msg.Body)
-
-}
-
 func main() {
 
 	loginJSONbytes, err := os.ReadFile("db/login.json")
