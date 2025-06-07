@@ -2,6 +2,7 @@ package oasis_sdk
 
 import (
 	"encoding/xml"
+	"fmt"
 	"mellium.im/xmlstream"
 	"mellium.im/xmpp/stanza"
 )
@@ -37,7 +38,7 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 	}
 
 	//mark as received if requested, and not group chat as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
-	if msg.RequestingDeliveryReceipt() && msg.Type != stanza.GroupChatMessage {
+	if msg.RequestingDeliveryReceipt() {
 		go self.MarkAsDelivered(msg)
 	}
 
@@ -45,5 +46,36 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 
 	//call handler and return to connection
 	self.dmHandler(self, msg)
+	return nil
+}
+
+func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstream.TokenReadEncoder) error {
+	////nothing to do if theres no handler
+	//if self.dmHandler == nil {
+	//	return nil
+	//}
+
+	//decode remaining parts to decode
+	d := xml.NewTokenDecoder(t)
+	body := &ChatMessageBody{}
+	err := d.Decode(body)
+	if err != nil {
+		return err
+	}
+	msg := &XMPPChatMessage{
+		Message:         header,
+		ChatMessageBody: *body,
+	}
+
+	ch := self.mucChannels[msg.From.Bare().String()]
+
+	fmt.Printf("groupchat %s: %s, found channel: %t\n", msg.From.String(), *msg.Body, ch == nil)
+
+	//no delivery receipt as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
+
+	//msg.ParseReply()
+
+	//call handler and return to connection
+	//self.dmHandler(self, msg)
 	return nil
 }

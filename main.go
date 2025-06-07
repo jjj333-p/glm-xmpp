@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"mellium.im/xmpp/muc"
 	"os"
 	oasisSdk "pain.agency/oasis-sdk"
 )
@@ -52,6 +53,11 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	}
 }
 
+func handleGroupChat(client *oasisSdk.XmppClient, channel *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
+	fmt.Printf("groupchat %s: %s\n", msg.From.String(), *msg.Body)
+
+}
+
 func main() {
 
 	loginJSONbytes, err := os.ReadFile("db/login.json")
@@ -66,7 +72,7 @@ func main() {
 	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
 	//systemPrompt := []llmMessage{sp}
 	//
-	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM)
+	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, nil)
 	if err != nil {
 		panic("Could not create client - " + err.Error())
 	}

@@ -62,6 +62,24 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 		panic("session never got set")
 	}
 
+	//testmucJID, _ := jid.Parse("testing@group.pain.agency/test bot")
+	//
+	//go self.MucClient.Join(self.Ctx, testmucJID, self.Session)
+
+	go func() {
+		n := len(self.mucsToJoin)
+		for i, mucJID := range self.mucsToJoin {
+			fmt.Printf("Joining muc %d/%d \"%s\" with nickname \"%s\"\n", i, n, mucJID.Bare().String(), mucJID.Resourcepart())
+			ch, err := self.MucClient.Join(self.Ctx, mucJID, self.Session)
+			if err != nil {
+				println(err.Error())
+				continue
+			}
+			self.mucChannels[mucJID.String()] = ch
+			fmt.Printf("joined muc %d/%d\n", i, n)
+		}
+	}()
+
 	if blocking {
 		return self.startServing()
 	} else {
@@ -179,15 +197,30 @@ func (self *XmppClient) ReplyToEvent(originalMsg *XMPPChatMessage, body string) 
 }
 
 // CreateClient creates the client object using the login info object and returns it
-func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler) (*XmppClient, error) {
+func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHandler GroupChatMessageHandler) (*XmppClient, error) {
+
+	mucJIDs := make([]jid.JID, 0, len(login.MucsToJoin))
+	for _, jidStr := range login.MucsToJoin {
+		//join with default displayname
+		jid, err := jid.Parse(jidStr + "/" + login.DisplayName)
+		if err != nil {
+			fmt.Println("Error parsing MUC jid: " + err.Error())
+			continue
+		}
+		mucJIDs = append(mucJIDs, jid)
+	}
+
 	// create client object
 	client := &XmppClient{
-		Login:     login,
-		dmHandler: dmHandler,
+		Login:               login,
+		dmHandler:           dmHandler,
+		groupMessageHandler: groupMessageHandler,
+		mucsToJoin:          mucJIDs,
+		mucChannels:         make(map[string]*muc.Channel),
 	}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
 
-	//client.MucClient
+	client.MucClient = &muc.Client{}
 	messageNS := xml.Name{
 		//Space: "jabber:client",
 		Local: "body",
@@ -197,6 +230,7 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler) (*XmppClient, 
 		"jabber:client",
 		muc.HandleClient(client.MucClient),
 		mux.MessageFunc(stanza.ChatMessage, messageNS, client.internalHandleDM),
+		mux.MessageFunc(stanza.GroupChatMessage, messageNS, client.internalHandleGroupMsg),
 	)
 
 	//string to jid object

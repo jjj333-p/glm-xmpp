@@ -156,16 +156,20 @@ type XMPPChatMessage struct {
 }
 
 type ChatMessageHandler func(client *XmppClient, message *XMPPChatMessage)
+type GroupChatMessageHandler func(client *XmppClient, channel *muc.Channel, message *XMPPChatMessage)
 
 // XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {
-	Ctx         context.Context
-	CtxCancel   context.CancelFunc
-	Login       *LoginInfo
-	JID         *jid.JID
-	Server      *string
-	Session     *xmpp.Session
-	Multiplexer *mux.ServeMux
-	MucClient   *muc.Client
-	dmHandler   ChatMessageHandler
+	Ctx                 context.Context
+	CtxCancel           context.CancelFunc
+	Login               *LoginInfo
+	JID                 *jid.JID
+	Server              *string
+	Session             *xmpp.Session
+	Multiplexer         *mux.ServeMux
+	MucClient           *muc.Client
+	mucsToJoin          []jid.JID
+	mucChannels         map[string]*muc.Channel
+	dmHandler           ChatMessageHandler
+	groupMessageHandler GroupChatMessageHandler
 }
