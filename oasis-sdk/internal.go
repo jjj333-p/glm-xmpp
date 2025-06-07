@@ -50,10 +50,10 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 }
 
 func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstream.TokenReadEncoder) error {
-	////nothing to do if theres no handler
-	//if self.dmHandler == nil {
-	//	return nil
-	//}
+	//nothing to do if theres no handler
+	if self.groupMessageHandler == nil {
+		return nil
+	}
 
 	//decode remaining parts to decode
 	d := xml.NewTokenDecoder(t)
@@ -69,13 +69,13 @@ func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstrea
 
 	ch := self.mucChannels[msg.From.Bare().String()]
 
-	fmt.Printf("groupchat %s: %s, found channel: %t\n", msg.From.String(), *msg.Body, ch == nil)
+	fmt.Printf("groupchat %s, found channel: %t\n", msg.From.String(), ch == nil)
 
 	//no delivery receipt as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
 
-	//msg.ParseReply()
+	msg.ParseReply()
 
 	//call handler and return to connection
-	//self.dmHandler(self, msg)
+	self.groupMessageHandler(self, ch, msg)
 	return nil
 }

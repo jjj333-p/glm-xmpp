@@ -53,6 +53,26 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	}
 }
 
+func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
+	var replyBody string
+	if msg.ReplyFallbackText == nil {
+		replyBody = "nil"
+	} else {
+		replyBody = *msg.ReplyFallbackText
+	}
+	err := client.ReplyToEvent(
+		msg,
+		fmt.Sprintf(
+			"message \"%s\" replying to \"%s\"\n",
+			*msg.CleanedBody,
+			replyBody,
+		),
+	)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
 func handleGroupChat(client *oasisSdk.XmppClient, channel *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
 	fmt.Printf("groupchat %s: %s\n", msg.From.String(), *msg.Body)
 
@@ -72,7 +92,7 @@ func main() {
 	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
 	//systemPrompt := []llmMessage{sp}
 	//
-	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, nil)
+	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, handleGroupMessage)
 	if err != nil {
 		panic("Could not create client - " + err.Error())
 	}
