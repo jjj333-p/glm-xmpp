@@ -62,10 +62,6 @@ func (self *XmppClient) Connect(blocking bool, onErr connectionErrHandler) error
 		panic("session never got set")
 	}
 
-	//testmucJID, _ := jid.Parse("testing@group.pain.agency/test bot")
-	//
-	//go self.MucClient.Join(self.Ctx, testmucJID, self.Session)
-
 	go func() {
 		n := len(self.mucsToJoin)
 		for i, mucJID := range self.mucsToJoin {
@@ -109,13 +105,51 @@ func (self *XmppClient) MarkAsDelivered(orignalMSG *XMPPChatMessage) {
 			Type: orignalMSG.Type,
 		},
 		Received: DeliveryReceipt{
-			ID: orignalMSG.ID,
+			ID: orignalMSG.ID, // dont send in groupchats, no need to handle
 		},
 	}
 	err := self.Session.Encode(self.Ctx, msg)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+}
+
+// MarkAsRead sends Read receipt as per https://xmpp.org/extensions/xep-0333.html
+func (self *XmppClient) MarkAsRead(orignalMSG *XMPPChatMessage) error {
+
+	//pull relevant id for type of message
+	var id string
+	if orignalMSG.Type == stanza.GroupChatMessage {
+		stanzaID := orignalMSG.StanzaID
+		if stanzaID == nil {
+			return errors.New("stanza id is nil")
+		}
+		if stanzaID.By.String() != orignalMSG.From.Bare().String() {
+			return errors.New("stanza id is not set by group host")
+		}
+		//TODO check if muc advertises stable IDs
+		id = stanzaID.ID
+	} else {
+		id = orignalMSG.ID
+	}
+
+	//craft event
+	msg := ReadReceiptResponse{
+		Message: stanza.Message{
+			To:   orignalMSG.From.Bare(),
+			Type: orignalMSG.Type,
+		},
+		Displayed: ReadReceipt{
+			ID: id,
+		},
+	}
+
+	//send
+	return self.Session.Encode(self.Ctx, msg)
+	//err := self.Session.Encode(self.Ctx, msg)
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
 }
 
 // SendText sends a plain message with `body` (type string) to `to` JID

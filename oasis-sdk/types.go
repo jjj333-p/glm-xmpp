@@ -64,6 +64,16 @@ type ReadReceiptRequest struct {
 	XMLName xml.Name `xml:"urn:xmpp:chat-markers:0 markable"`
 }
 
+type ReadReceipt struct {
+	XMLName xml.Name `xml:"urn:xmpp:chat-markers:0 displayed"`
+	ID      string   `xml:"id,attr"`
+}
+
+type ReadReceiptResponse struct {
+	stanza.Message
+	Displayed ReadReceipt `xml:"displayed"`
+}
+
 // ----- begin Chatstates --------
 type GoneChatstate struct {
 	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates gone"`

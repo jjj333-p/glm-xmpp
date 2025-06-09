@@ -40,7 +40,11 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	} else {
 		replyBody = *msg.ReplyFallbackText
 	}
-	err := client.ReplyToEvent(
+	err := client.MarkAsRead(msg)
+	if err != nil {
+		fmt.Printf("Error marking as read: %v\n", err)
+	}
+	err = client.ReplyToEvent(
 		msg,
 		fmt.Sprintf(
 			"message \"%s\" replying to \"%s\"\n",
@@ -60,7 +64,11 @@ func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasis
 	} else {
 		replyBody = *msg.ReplyFallbackText
 	}
-	err := client.ReplyToEvent(
+	err := client.MarkAsRead(msg)
+	if err != nil {
+		fmt.Printf("Error marking as read: %v\n", err)
+	}
+	err = client.ReplyToEvent(
 		msg,
 		fmt.Sprintf(
 			"message \"%s\" replying to \"%s\"\n",
@@ -92,7 +100,8 @@ func main() {
 		panic("Could not create client - " + err.Error())
 	}
 
-	if client.Connect(true, nil) != nil {
+	err = client.Connect(true, nil)
+	if err != nil {
 		panic("Could not connect - " + err.Error())
 	}
 
