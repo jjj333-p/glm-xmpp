@@ -74,25 +74,6 @@ type ReadReceiptResponse struct {
 	Displayed ReadReceipt `xml:"displayed"`
 }
 
-// ----- begin Chatstates --------
-type GoneChatstate struct {
-	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates gone"`
-}
-type ActiveChatstate struct {
-	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates active"`
-}
-type InactiveChatstate struct {
-	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates inactive"`
-}
-type ComposingChatstate struct {
-	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates composing"`
-}
-type PausedChatstate struct {
-	XMLName xml.Name `xml:"http://jabber.org/protocol/chatstates paused"`
-}
-
-// ----- end Chatstates --------
-
 type UnknownElement struct {
 	XMLName xml.Name
 	Content string     `xml:",innerxml"`
@@ -125,16 +106,6 @@ func (self *ChatMessageBody) RequestingDeliveryReceipt() bool {
 func (self *ChatMessageBody) RequestingReadReceipt() bool {
 	return self.Markable != nil
 }
-
-type ChatState int
-
-const (
-	ChatStateActive ChatState = iota
-	ChatStateInactive
-	ChatStateComposing
-	ChatStatePaused
-	ChatStateGone
-)
 
 /*
 XMPPChatMessage struct is a representation of the stanza such that it's contextual items
