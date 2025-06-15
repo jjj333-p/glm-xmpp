@@ -3,16 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/muc"
-	"os"
 	oasisSdk "pain.agency/oasis-sdk"
 )
 
 type glmConfig struct {
 	LoginInfo oasisSdk.LoginInfo `json:"login_info"`
 	//specific to this project
-	llmInfo struct {
+	LlmInfo struct {
 		Model        string `json:"LlmModel"`
 		BaseURL      string `json:"LlmBaseURL"`
 		ApiKey       string `json:"LlmApiKey"`
@@ -82,6 +83,13 @@ func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasis
 	}
 }
 
+func deliveryReceiptHandler(client *oasisSdk.XmppClient, from jid.JID, id string) {
+	fmt.Printf("Delivered %s to %s\n", id, from.String())
+}
+func readReceiptHandler(client *oasisSdk.XmppClient, from jid.JID, id string) {
+	fmt.Printf("%s has seen %s\n", from.String(), id)
+}
+
 func handleChatstate(_ *oasisSdk.XmppClient, from jid.JID, state oasisSdk.ChatState) {
 	fromStr := from.String()
 	switch state {
@@ -114,7 +122,14 @@ func main() {
 	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
 	//systemPrompt := []llmMessage{sp}
 	//
-	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, handleGroupMessage, handleChatstate)
+	client, err := oasisSdk.CreateClient(
+		&xmppConfig.LoginInfo,
+		handleDM,
+		handleGroupMessage,
+		handleChatstate,
+		deliveryReceiptHandler,
+		readReceiptHandler,
+	)
 	if err != nil {
 		panic("Could not create client - " + err.Error())
 	}

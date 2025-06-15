@@ -3,6 +3,7 @@ package oasis_sdk
 import (
 	"encoding/xml"
 	"fmt"
+
 	"mellium.im/xmlstream"
 	"mellium.im/xmpp/stanza"
 )
@@ -42,6 +43,11 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 		go self.MarkAsDelivered(msg)
 	}
 
+	//mark as read if requested
+	if msg.RequestingReadReceipt() {
+		go self.MarkAsRead(msg)
+	}
+
 	msg.ParseReply()
 
 	//call handler and return to connection
@@ -73,9 +79,58 @@ func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstrea
 
 	//no delivery receipt as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
 
+	//mark as read if requested
+	if msg.RequestingReadReceipt() {
+		go self.MarkAsRead(msg)
+	}
+
 	msg.ParseReply()
 
 	//call handler and return to connection
 	self.groupMessageHandler(self, ch, msg)
+	return nil
+}
+
+func (self *XmppClient) internalHandleDeliveryReceipt(header stanza.Message, t xmlstream.TokenReadEncoder) error {
+
+	//only decode if there is a handler
+	if self.deliveryReceiptHandler == nil {
+		return nil
+	}
+
+	// decode receipt type message
+	d := xml.NewTokenDecoder(t)
+	receipt := DeliveryReceiptBody{}
+	err := d.Decode(&receipt)
+	if err != nil {
+		return err
+	}
+
+	//only one possible field
+	id := receipt.Received.ID
+
+	self.deliveryReceiptHandler(self, header.From, id)
+	return nil
+}
+
+func (self *XmppClient) internalHandleReadReceipt(header stanza.Message, t xmlstream.TokenReadEncoder) error {
+
+	//only decode if there is a handler
+	if self.readReceiptHandler == nil {
+		return nil
+	}
+
+	// decode receipt type message
+	d := xml.NewTokenDecoder(t)
+	receipt := ReadReceiptBody{}
+	err := d.Decode(&receipt)
+	if err != nil {
+		return err
+	}
+
+	//only one possible field
+	id := receipt.Displayed.ID
+
+	self.readReceiptHandler(self, header.From, id)
 	return nil
 }

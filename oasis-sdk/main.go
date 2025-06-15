@@ -6,6 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"strings"
+
 	"mellium.im/sasl"
 	"mellium.im/xmpp"
 	"mellium.im/xmpp/dial"
@@ -13,7 +15,6 @@ import (
 	"mellium.im/xmpp/muc"
 	"mellium.im/xmpp/mux"
 	"mellium.im/xmpp/stanza"
-	"strings"
 )
 
 type connectionErrHandler func(err error)
@@ -231,7 +232,14 @@ func (self *XmppClient) ReplyToEvent(originalMsg *XMPPChatMessage, body string) 
 }
 
 // CreateClient creates the client object using the login info object and returns it
-func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHandler GroupChatMessageHandler, chatstateHandler ChatstateHandler) (*XmppClient, error) {
+func CreateClient(
+	login *LoginInfo,
+	dmHandler ChatMessageHandler,
+	groupMessageHandler GroupChatMessageHandler,
+	chatstateHandler ChatstateHandler,
+	deliveryReceiptHandler DeliveryReceiptHandler,
+	readReceiptHandler ReadReceiptHandler,
+) (*XmppClient, error) {
 
 	mucJIDs := make([]jid.JID, 0, len(login.MucsToJoin))
 	for _, jidStr := range login.MucsToJoin {
@@ -246,12 +254,14 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 
 	// create client object
 	client := &XmppClient{
-		Login:               login,
-		dmHandler:           dmHandler,
-		groupMessageHandler: groupMessageHandler,
-		chatstateHandler:    chatstateHandler,
-		mucsToJoin:          mucJIDs,
-		mucChannels:         make(map[string]*muc.Channel),
+		Login:                  login,
+		dmHandler:              dmHandler,
+		groupMessageHandler:    groupMessageHandler,
+		chatstateHandler:       chatstateHandler,
+		deliveryReceiptHandler: deliveryReceiptHandler,
+		readReceiptHandler:     readReceiptHandler,
+		mucsToJoin:             mucJIDs,
+		mucChannels:            make(map[string]*muc.Channel),
 	}
 	client.Ctx, client.CtxCancel = context.WithCancel(context.Background())
 
@@ -276,7 +286,16 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 	goneNS := xml.Name{
 		Local: "gone",
 	}
-	// ------ chatstates ----
+	// ------ chatstates ------
+
+	// ------ receipts --------
+	deliveredNS := xml.Name{
+		Local: "received",
+	}
+	displayedNS := xml.Name{
+		Local: "displayed",
+	}
+	// ------ receipts --------
 
 	client.Multiplexer = mux.New(
 		"jabber:client",
@@ -295,12 +314,19 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 		mux.MessageFunc(stanza.ChatMessage, inactiveNS, client.internalInactiveChatstateReceiver),
 		mux.MessageFunc(stanza.ChatMessage, goneNS, client.internalGoneChatstateReceiver),
 
+		// Receipt handlers for direct messages
+		mux.MessageFunc(stanza.ChatMessage, deliveredNS, client.internalHandleDeliveryReceipt),
+		mux.MessageFunc(stanza.ChatMessage, displayedNS, client.internalHandleReadReceipt),
+
 		// Chat state handlers for group messages
 		mux.MessageFunc(stanza.GroupChatMessage, activeNS, client.internalActiveChatstateReceiver),
 		mux.MessageFunc(stanza.GroupChatMessage, composingNS, client.internalComposingChatstateReciever),
 		mux.MessageFunc(stanza.GroupChatMessage, pausedNS, client.internalPausedChatstateReceiver),
 		mux.MessageFunc(stanza.GroupChatMessage, inactiveNS, client.internalInactiveChatstateReceiver),
 		mux.MessageFunc(stanza.GroupChatMessage, goneNS, client.internalGoneChatstateReceiver),
+
+		// Receipt handlers for group messages
+		mux.MessageFunc(stanza.GroupChatMessage, displayedNS, client.internalHandleReadReceipt),
 	)
 
 	//string to jid object

@@ -54,6 +54,10 @@ type DeliveryReceipt struct {
 	ID      string   `xml:"id,attr"`
 }
 
+type DeliveryReceiptBody struct {
+	Received DeliveryReceipt `xml:"received"`
+}
+
 type DeliveryReceiptResponse struct {
 	stanza.Message
 	Received DeliveryReceipt `xml:"received"`
@@ -67,6 +71,10 @@ type ReadReceiptRequest struct {
 type ReadReceipt struct {
 	XMLName xml.Name `xml:"urn:xmpp:chat-markers:0 displayed"`
 	ID      string   `xml:"id,attr"`
+}
+
+type ReadReceiptBody struct {
+	Displayed ReadReceipt `xml:"displayed"`
 }
 
 type ReadReceiptResponse struct {
@@ -88,12 +96,12 @@ type ChatMessageBody struct {
 	Fallback           []Fallback              `xml:"fallback"`
 	Request            *DeliveryReceiptRequest `xml:"request"`
 	Markable           *ReadReceiptRequest     `xml:"markable"`
-	Unknown            []UnknownElement        `xml:",any"`
 	GoneChatState      *GoneChatstate          `xml:"gone"`
 	ActiveChatState    *ActiveChatstate        `xml:"active"`
 	InactiveChatState  *InactiveChatstate      `xml:"inactive"`
 	ComposingChatState *ComposingChatstate     `xml:"composing"`
 	PausedChatState    *PausedChatstate        `xml:"paused"`
+	Unknown            []UnknownElement        `xml:",any"`
 	FallbacksParsed    bool                    `xml:"-"`
 	CleanedBody        *string                 `xml:"-"`
 	ReplyFallbackText  *string                 `xml:"-"`
@@ -119,20 +127,24 @@ type XMPPChatMessage struct {
 type ChatMessageHandler func(client *XmppClient, message *XMPPChatMessage)
 type GroupChatMessageHandler func(client *XmppClient, channel *muc.Channel, message *XMPPChatMessage)
 type ChatstateHandler func(client *XmppClient, from jid.JID, state ChatState)
+type DeliveryReceiptHandler func(client *XmppClient, from jid.JID, id string)
+type ReadReceiptHandler func(client *XmppClient, from jid.JID, id string)
 
 // XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {
-	Ctx                 context.Context
-	CtxCancel           context.CancelFunc
-	Login               *LoginInfo
-	JID                 *jid.JID
-	Server              *string
-	Session             *xmpp.Session
-	Multiplexer         *mux.ServeMux
-	MucClient           *muc.Client
-	mucsToJoin          []jid.JID
-	mucChannels         map[string]*muc.Channel
-	dmHandler           ChatMessageHandler
-	groupMessageHandler GroupChatMessageHandler
-	chatstateHandler    ChatstateHandler
+	Ctx                    context.Context
+	CtxCancel              context.CancelFunc
+	Login                  *LoginInfo
+	JID                    *jid.JID
+	Server                 *string
+	Session                *xmpp.Session
+	Multiplexer            *mux.ServeMux
+	MucClient              *muc.Client
+	mucsToJoin             []jid.JID
+	mucChannels            map[string]*muc.Channel
+	dmHandler              ChatMessageHandler
+	groupMessageHandler    GroupChatMessageHandler
+	chatstateHandler       ChatstateHandler
+	deliveryReceiptHandler DeliveryReceiptHandler
+	readReceiptHandler     ReadReceiptHandler
 }
