@@ -231,7 +231,7 @@ func (self *XmppClient) ReplyToEvent(originalMsg *XMPPChatMessage, body string) 
 }
 
 // CreateClient creates the client object using the login info object and returns it
-func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHandler GroupChatMessageHandler) (*XmppClient, error) {
+func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHandler GroupChatMessageHandler, chatstateHandler ChatstateHandler) (*XmppClient, error) {
 
 	mucJIDs := make([]jid.JID, 0, len(login.MucsToJoin))
 	for _, jidStr := range login.MucsToJoin {
@@ -249,6 +249,7 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 		Login:               login,
 		dmHandler:           dmHandler,
 		groupMessageHandler: groupMessageHandler,
+		chatstateHandler:    chatstateHandler,
 		mucsToJoin:          mucJIDs,
 		mucChannels:         make(map[string]*muc.Channel),
 	}
@@ -256,15 +257,50 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 
 	client.MucClient = &muc.Client{}
 	messageNS := xml.Name{
-		//Space: "jabber:client",
 		Local: "body",
 	}
 
+	// ------ chatstates -------
+	composingNS := xml.Name{
+		Local: "composing",
+	}
+	activeNS := xml.Name{
+		Local: "active",
+	}
+	pausedNS := xml.Name{
+		Local: "paused",
+	}
+	inactiveNS := xml.Name{
+		Local: "inactive",
+	}
+	goneNS := xml.Name{
+		Local: "gone",
+	}
+	// ------ chatstates ----
+
 	client.Multiplexer = mux.New(
 		"jabber:client",
+
+		//provide object to hold muc state
 		muc.HandleClient(client.MucClient),
+
+		//handlers for chat messages
 		mux.MessageFunc(stanza.ChatMessage, messageNS, client.internalHandleDM),
 		mux.MessageFunc(stanza.GroupChatMessage, messageNS, client.internalHandleGroupMsg),
+
+		// Chat state handlers for direct messages
+		mux.MessageFunc(stanza.ChatMessage, activeNS, client.internalActiveChatstateReceiver),
+		mux.MessageFunc(stanza.ChatMessage, composingNS, client.internalComposingChatstateReciever),
+		mux.MessageFunc(stanza.ChatMessage, pausedNS, client.internalPausedChatstateReceiver),
+		mux.MessageFunc(stanza.ChatMessage, inactiveNS, client.internalInactiveChatstateReceiver),
+		mux.MessageFunc(stanza.ChatMessage, goneNS, client.internalGoneChatstateReceiver),
+
+		// Chat state handlers for group messages
+		mux.MessageFunc(stanza.GroupChatMessage, activeNS, client.internalActiveChatstateReceiver),
+		mux.MessageFunc(stanza.GroupChatMessage, composingNS, client.internalComposingChatstateReciever),
+		mux.MessageFunc(stanza.GroupChatMessage, pausedNS, client.internalPausedChatstateReceiver),
+		mux.MessageFunc(stanza.GroupChatMessage, inactiveNS, client.internalInactiveChatstateReceiver),
+		mux.MessageFunc(stanza.GroupChatMessage, goneNS, client.internalGoneChatstateReceiver),
 	)
 
 	//string to jid object

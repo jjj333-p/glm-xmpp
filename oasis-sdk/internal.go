@@ -79,3 +79,38 @@ func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstrea
 	self.groupMessageHandler(self, ch, msg)
 	return nil
 }
+
+func (self *XmppClient) internalComposingChatstateReciever(header stanza.Message, _ xmlstream.TokenReadEncoder) error {
+	if self.chatstateHandler != nil {
+		self.chatstateHandler(self, header.From, ChatStateComposing)
+	}
+	return nil
+}
+
+func (self *XmppClient) internalActiveChatstateReceiver(header stanza.Message, _ xmlstream.TokenReadEncoder) error {
+	if self.chatstateHandler != nil {
+		self.chatstateHandler(self, header.From, ChatStateActive)
+	}
+	return nil
+}
+
+func (self *XmppClient) internalPausedChatstateReceiver(header stanza.Message, _ xmlstream.TokenReadEncoder) error {
+	if self.chatstateHandler != nil {
+		self.chatstateHandler(self, header.From, ChatStatePaused)
+	}
+	return nil
+}
+
+func (self *XmppClient) internalInactiveChatstateReceiver(header stanza.Message, _ xmlstream.TokenReadEncoder) error {
+	if self.chatstateHandler != nil {
+		self.chatstateHandler(self, header.From, ChatStateInactive)
+	}
+	return nil
+}
+
+func (self *XmppClient) internalGoneChatstateReceiver(header stanza.Message, _ xmlstream.TokenReadEncoder) error {
+	if self.chatstateHandler != nil {
+		self.chatstateHandler(self, header.From, ChatStateGone)
+	}
+	return nil
+}

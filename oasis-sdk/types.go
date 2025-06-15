@@ -167,6 +167,7 @@ type XMPPChatMessage struct {
 
 type ChatMessageHandler func(client *XmppClient, message *XMPPChatMessage)
 type GroupChatMessageHandler func(client *XmppClient, channel *muc.Channel, message *XMPPChatMessage)
+type ChatstateHandler func(client *XmppClient, from jid.JID, state ChatState)
 
 // XmppClient is the end xmpp client object from which everything else works around
 type XmppClient struct {
@@ -182,4 +183,5 @@ type XmppClient struct {
 	mucChannels         map[string]*muc.Channel
 	dmHandler           ChatMessageHandler
 	groupMessageHandler GroupChatMessageHandler
+	chatstateHandler    ChatstateHandler
 }

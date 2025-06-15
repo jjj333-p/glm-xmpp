@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/muc"
 	"os"
 	oasisSdk "pain.agency/oasis-sdk"
@@ -81,6 +82,24 @@ func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasis
 	}
 }
 
+func handleChatstate(_ *oasisSdk.XmppClient, from jid.JID, state oasisSdk.ChatState) {
+	fromStr := from.String()
+	switch state {
+	case oasisSdk.ChatStateActive:
+		fmt.Println(fromStr, "is active")
+	case oasisSdk.ChatStateComposing:
+		fmt.Println(fromStr, "is composing")
+	case oasisSdk.ChatStatePaused:
+		fmt.Println(fromStr, "has paused typing")
+	case oasisSdk.ChatStateInactive:
+		fmt.Println(fromStr, "is inactive")
+	case oasisSdk.ChatStateGone:
+		fmt.Println(fromStr, "has gone")
+	default:
+		fmt.Println(fromStr, "is in an unknown state.")
+	}
+}
+
 func main() {
 
 	loginJSONbytes, err := os.ReadFile("db/login.json")
@@ -95,7 +114,7 @@ func main() {
 	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
 	//systemPrompt := []llmMessage{sp}
 	//
-	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, handleGroupMessage)
+	client, err := oasisSdk.CreateClient(&xmppConfig.LoginInfo, handleDM, handleGroupMessage, handleChatstate)
 	if err != nil {
 		panic("Could not create client - " + err.Error())
 	}
