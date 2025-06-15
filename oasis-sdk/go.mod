@@ -1,6 +1,7 @@
 module pain.agency/oasis-sdk
 
 go 1.24
+
 require (
 	mellium.im/sasl v0.3.2
 	mellium.im/xmlstream v0.15.4
