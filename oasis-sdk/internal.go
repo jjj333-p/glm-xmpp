@@ -43,11 +43,6 @@ func (self *XmppClient) internalHandleDM(header stanza.Message, t xmlstream.Toke
 		go self.MarkAsDelivered(msg)
 	}
 
-	//mark as read if requested
-	if msg.RequestingReadReceipt() {
-		go self.MarkAsRead(msg)
-	}
-
 	msg.ParseReply()
 
 	//call handler and return to connection
@@ -78,11 +73,6 @@ func (self *XmppClient) internalHandleGroupMsg(header stanza.Message, t xmlstrea
 	fmt.Printf("groupchat %s, found channel: %t\n", msg.From.String(), ch == nil)
 
 	//no delivery receipt as per https://xmpp.org/extensions/xep-0184.html#when-groupchat
-
-	//mark as read if requested
-	if msg.RequestingReadReceipt() {
-		go self.MarkAsRead(msg)
-	}
 
 	msg.ParseReply()
 
