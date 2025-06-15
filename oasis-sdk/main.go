@@ -236,12 +236,12 @@ func CreateClient(login *LoginInfo, dmHandler ChatMessageHandler, groupMessageHa
 	mucJIDs := make([]jid.JID, 0, len(login.MucsToJoin))
 	for _, jidStr := range login.MucsToJoin {
 		//join with default displayname
-		jid, err := jid.Parse(jidStr + "/" + login.DisplayName)
+		j, err := jid.Parse(jidStr + "/" + login.DisplayName)
 		if err != nil {
 			fmt.Println("Error parsing MUC jid: " + err.Error())
 			continue
 		}
-		mucJIDs = append(mucJIDs, jid)
+		mucJIDs = append(mucJIDs, j)
 	}
 
 	// create client object
