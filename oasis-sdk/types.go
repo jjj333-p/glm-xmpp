@@ -129,32 +129,12 @@ func (self *ChatMessageBody) RequestingReadReceipt() bool {
 type ChatState int
 
 const (
-	ChatStateNone ChatState = iota
-	ChatStateActive
+	ChatStateActive ChatState = iota
 	ChatStateInactive
 	ChatStateComposing
 	ChatStatePaused
 	ChatStateGone
 )
-
-func (self *ChatMessageBody) GetChatstate() ChatState {
-	if self.ComposingChatState != nil {
-		return ChatStateComposing
-	}
-	if self.PausedChatState != nil {
-		return ChatStatePaused
-	}
-	if self.ActiveChatState != nil {
-		return ChatStateActive
-	}
-	if self.InactiveChatState != nil {
-		return ChatStateInactive
-	}
-	if self.GoneChatState != nil {
-		return ChatStateGone
-	}
-	return ChatStateNone
-}
 
 /*
 XMPPChatMessage struct is a representation of the stanza such that it's contextual items
