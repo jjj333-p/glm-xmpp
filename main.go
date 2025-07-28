@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"mellium.im/xmpp/jid"
@@ -91,11 +92,11 @@ func main() {
 
 	loginJSONbytes, err := os.ReadFile("db/login.json")
 	if err != nil {
-		panic("Unable to read login.json - " + err.Error())
+		log.Fatalln("Unable to read login.json - " + err.Error())
 	}
 	xmppConfig := glmConfig{}
 	if err := json.Unmarshal(loginJSONbytes, &xmppConfig); err != nil {
-		panic("Could not parse login.json - " + err.Error())
+		log.Fatalln("Could not parse login.json - " + err.Error())
 	}
 
 	client, err := oasisSdk.CreateClient(
@@ -107,12 +108,12 @@ func main() {
 		readReceiptHandler,
 	)
 	if err != nil {
-		panic("Could not create client - " + err.Error())
+		log.Fatalln("Could not create client - " + err.Error())
 	}
 
 	err = client.Connect(true, nil)
 	if err != nil {
-		panic("Could not connect - " + err.Error())
+		log.Fatalln("Could not connect - " + err.Error())
 	}
 
 }
