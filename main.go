@@ -39,7 +39,7 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	}
 }
 
-func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
+func handleGroupMessage(client *oasisSdk.XmppClient, _ *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
 	var replyBody string
 	if msg.ReplyFallbackText == nil {
 		replyBody = "nil"
@@ -63,10 +63,10 @@ func handleGroupMessage(client *oasisSdk.XmppClient, ch *muc.Channel, msg *oasis
 	}
 }
 
-func deliveryReceiptHandler(client *oasisSdk.XmppClient, from jid.JID, id string) {
+func deliveryReceiptHandler(_ *oasisSdk.XmppClient, from jid.JID, id string) {
 	fmt.Printf("Delivered %s to %s\n", id, from.String())
 }
-func readReceiptHandler(client *oasisSdk.XmppClient, from jid.JID, id string) {
+func readReceiptHandler(_ *oasisSdk.XmppClient, from jid.JID, id string) {
 	fmt.Printf("%s has seen %s\n", from.String(), id)
 }
 
