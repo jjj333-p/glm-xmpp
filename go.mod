@@ -2,10 +2,7 @@ module glm-xmpp
 
 go 1.24
 
-require (
-	mellium.im/xmpp v0.22.0
-	pain.agency/oasis-sdk v0.0.0-00010101000000-000000000000
-)
+require mellium.im/xmpp v0.22.0
 
 require (
 	golang.org/x/crypto v0.36.0 // indirect
@@ -17,6 +14,5 @@ require (
 	mellium.im/reader v0.1.0 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 	mellium.im/xmlstream v0.15.4 // indirect
+	pain.agency/oasis-sdk v0.0.0-20250727015919-3e959a4b410e // indirect
 )
-
-replace pain.agency/oasis-sdk => ./oasis-sdk
