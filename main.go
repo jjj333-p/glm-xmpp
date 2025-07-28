@@ -12,27 +12,6 @@ import (
 
 type glmConfig struct {
 	LoginInfo oasisSdk.LoginInfo `json:"login_info"`
-	//specific to this project
-	LlmInfo struct {
-		Model        string `json:"LlmModel"`
-		BaseURL      string `json:"LlmBaseURL"`
-		ApiKey       string `json:"LlmApiKey"`
-		SystemPrompt string `json:"SystemPrompt"`
-	} `json:"llm_info"`
-}
-
-type llmMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type llmResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string      `json:"content"`
-			Refusal interface{} `json:"refusal"` // or *string if you expect a string/null
-		} `json:"message"`
-	} `json:"choices"`
 }
 
 func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
@@ -119,9 +98,6 @@ func main() {
 		panic("Could not parse login.json - " + err.Error())
 	}
 
-	//sp := llmMessage{Role: "system", Content: xmppConfig.llmInfo.Model}
-	//systemPrompt := []llmMessage{sp}
-	//
 	client, err := oasisSdk.CreateClient(
 		&xmppConfig.LoginInfo,
 		handleDM,
