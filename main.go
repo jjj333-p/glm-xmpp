@@ -40,9 +40,10 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	}
 }
 
-func handleGroupMessage(client *oasisSdk.XmppClient, _ *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
+func handleGroupMessage(client *oasisSdk.XmppClient, CH *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
 
-	if msg.From.Equal(*client.JID) {
+	//TODO why is CH nil?
+	if CH == nil || CH.Me().Equal(msg.From) {
 		return
 	}
 
@@ -56,8 +57,8 @@ func handleGroupMessage(client *oasisSdk.XmppClient, _ *muc.Channel, msg *oasisS
 	if err != nil {
 		fmt.Printf("Error marking as read: %v\n", err)
 	}
-	err = client.ReplyToEvent(
-		msg,
+	err = client.SendText(
+		msg.From.Bare(),
 		fmt.Sprintf(
 			"message \"%s\" replying to \"%s\"\n",
 			*msg.CleanedBody,
