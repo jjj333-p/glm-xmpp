@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -111,9 +112,28 @@ func main() {
 		log.Fatalln("Could not create client - " + err.Error())
 	}
 
-	err = client.Connect(true, nil)
+	go func() {
+		err = client.Connect()
+		if err != nil {
+			log.Fatalln("Could not connect - " + err.Error())
+		}
+	}()
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter file path: ")
+	filePath, err := reader.ReadString('\n')
 	if err != nil {
-		log.Fatalln("Could not connect - " + err.Error())
+		log.Fatalln("Error reading input:", err)
 	}
 
+	// Trim newline character from input
+	filePath = filePath[:len(filePath)-1]
+
+	url, err := client.UploadFile(filePath)
+	if err != nil {
+		log.Fatalln("Error uploading file:", err)
+	}
+
+	//fmt.Printf("Read %d bytes from file\n", len(fileBytes))
+	fmt.Println(url)
 }
