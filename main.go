@@ -42,7 +42,6 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 
 func handleGroupMessage(client *oasisSdk.XmppClient, CH *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
 
-	//TODO why is CH nil?
 	if CH == nil || CH.Me().Equal(msg.From) {
 		return
 	}
