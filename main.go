@@ -41,6 +41,11 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 }
 
 func handleGroupMessage(client *oasisSdk.XmppClient, _ *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
+
+	if msg.From.Equal(*client.JID) {
+		return
+	}
+
 	var replyBody string
 	if msg.ReplyFallbackText == nil {
 		replyBody = "nil"
