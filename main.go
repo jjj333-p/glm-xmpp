@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -134,11 +135,24 @@ func main() {
 	// Trim newline character from input
 	filePath = filePath[:len(filePath)-1]
 
-	url, err := client.UploadFile(filePath)
-	if err != nil {
-		log.Fatalln("Error uploading file:", err)
-	}
+	// Create a cancellable context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	//fmt.Printf("Read %d bytes from file\n", len(fileBytes))
-	fmt.Println(url)
+	progress := make(chan oasisSdk.UploadProgress)
+
+	go client.UploadFile(ctx, filePath, progress)
+	for update := range progress {
+		if update.Error != nil {
+			log.Fatalln("Error uploading file - " + update.Error.Error())
+		}
+		if update.GetURL != "" {
+			fmt.Println("file upload done, available at", update.GetURL)
+			return
+		}
+		fmt.Printf(
+			"%d out of %d bytes uploaded, %.2f%% complete\n",
+			update.BytesSent, update.TotalBytes, update.Percentage,
+		)
+	}
 }
