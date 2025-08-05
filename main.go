@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/muc"
@@ -148,11 +149,25 @@ func main() {
 		}
 		if update.GetURL != "" {
 			fmt.Println("file upload done, available at", update.GetURL)
-			return
+
+			desc := "Uploaded image description"
+
+			err := client.SendSingleFileMessage(
+				jid.MustParse("testing@group.pain.agency"),
+				update.GetURL,
+				&desc,
+			)
+
+			fmt.Println(err)
+			fmt.Println(desc)
 		}
 		fmt.Printf(
 			"%d out of %d bytes uploaded, %.2f%% complete\n",
 			update.BytesSent, update.TotalBytes, update.Percentage,
 		)
 	}
+
+	l := sync.Mutex{}
+	l.Lock()
+	l.Lock()
 }
