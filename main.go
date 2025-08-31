@@ -109,15 +109,16 @@ func main() {
 
 	client, err := oasisSdk.CreateClient(
 		&xmppConfig.LoginInfo,
-		handleDM,
-		handleGroupMessage,
-		handleChatstate,
-		deliveryReceiptHandler,
-		readReceiptHandler,
 	)
 	if err != nil {
 		log.Fatalln("Could not create client - " + err.Error())
 	}
+
+	client.SetDmHandler(handleDM)
+	client.SetGroupChatHandler(handleGroupMessage)
+	client.SetChatstateHandler(handleChatstate)
+	client.SetDeliveryReceiptHandler(deliveryReceiptHandler)
+	client.SetReadReceiptHandler(readReceiptHandler)
 
 	go func() {
 		err = client.Connect()
