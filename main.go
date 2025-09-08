@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 
+	"mellium.im/xmpp/bookmarks"
 	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/muc"
 	oasisSdk "pain.agency/oasis-sdk"
@@ -119,6 +120,15 @@ func main() {
 	client.SetChatstateHandler(handleChatstate)
 	client.SetDeliveryReceiptHandler(deliveryReceiptHandler)
 	client.SetReadReceiptHandler(readReceiptHandler)
+
+	client.SetBookmarkHandler(false, func(_ *oasisSdk.XmppClient, bookmark bookmarks.Channel) {
+		fmt.Println(bookmark)
+		var maxHistCount uint64 = 5
+		_, err := client.ConnectMuc(bookmark, oasisSdk.MucLegacyHistoryConfig{MaxCount: &maxHistCount}, context.TODO())
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	})
 
 	go func() {
 		err = client.Connect()
