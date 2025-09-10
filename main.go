@@ -43,6 +43,24 @@ func handleDM(client *oasisSdk.XmppClient, msg *oasisSdk.XMPPChatMessage) {
 	}
 }
 
+func handlePresence(client *oasisSdk.XmppClient, from jid.JID, p oasisSdk.UserPresence) {
+	fromStr := from.String()
+	switch p.Indicator {
+	case oasisSdk.PresenceShowAvailable:
+		fmt.Println(fromStr, "is available")
+	case oasisSdk.PresenceShowChat:
+		fmt.Println(fromStr, "is ready to chat")
+	case oasisSdk.PresenceShowAway:
+		fmt.Println(fromStr, "is away")
+	case oasisSdk.PresenceShowXA:
+		fmt.Println(fromStr, "is extended away")
+	case oasisSdk.PresenceShowDND:
+		fmt.Println(fromStr, "is do not disturb")
+	default:
+		fmt.Println(fromStr, "has unknown presence state")
+	}
+}
+
 func handleGroupMessage(client *oasisSdk.XmppClient, CH *muc.Channel, msg *oasisSdk.XMPPChatMessage) {
 
 	if CH == nil || CH.Me().Equal(msg.From) {
@@ -118,6 +136,7 @@ func main() {
 	client.SetDmHandler(handleDM)
 	client.SetGroupChatHandler(handleGroupMessage)
 	client.SetChatstateHandler(handleChatstate)
+	client.SetPresenceHandler(handlePresence)
 	client.SetDeliveryReceiptHandler(deliveryReceiptHandler)
 	client.SetReadReceiptHandler(readReceiptHandler)
 
